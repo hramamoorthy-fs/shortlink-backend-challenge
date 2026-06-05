@@ -2,6 +2,11 @@
 
 A full-stack URL shortening service built with Node.js, Express, Prisma, and Supabase (PostgreSQL). It includes a robust API for creating short links, tracking visit statistics, and a clean, lightweight frontend built with Vanilla HTML/JS.
 
+## Live Deployment
+🚀 **Live Demo:** [http://51.20.53.241:3000/]
+
+---
+
 ## Features
 * **Shorten URLs:** Converts long URLs into 6-character, unique alphanumeric short codes.
 * **Redirection:** Instantly redirects users from the short link to the original destination.
@@ -16,14 +21,14 @@ A full-stack URL shortening service built with Node.js, Express, Prisma, and Sup
 
 ---
 
-## Prerequisites
+## Prerequisites (Local Development)
 Before running this project, ensure you have the following installed:
 * [Node.js](https://nodejs.org/) (v18 or higher)
 * A [Supabase](https://supabase.com/) account with a PostgreSQL database project created.
 
 ---
 
-## Installation & Setup
+## Local Installation & Setup
 
 **1. Clone the repository and navigate to the project folder:**
 \`\`\`bash
@@ -37,8 +42,6 @@ npm install
 
 **3. Configure Environment Variables:**
 Create a `.env` file in the root directory and add your Supabase database connection strings. 
-
-*Note: Prisma requires a direct connection to push schemas, but the Node app uses the connection pooler.*
 \`\`\`env
 # Port 6543 (Connection Pooler) for the Node.js application
 DATABASE_URL="postgres://postgres.[your-project-ref]:[your-password]@aws-1-ap-south-1.pooler.supabase.com:6543/postgres?pgbouncer=true&connection_limit=1"
@@ -48,7 +51,6 @@ DIRECT_URL="postgres://postgres.[your-project-ref]:[your-password]@aws-1-ap-sout
 \`\`\`
 
 **4. Push Database Schema & Generate Prisma Client:**
-Run the following commands to create the `urls` table in Supabase and generate the Prisma client files:
 \`\`\`bash
 npx prisma db push
 npx prisma generate
@@ -59,6 +61,61 @@ npx prisma generate
 npm start
 \`\`\`
 The application will be running at: `http://localhost:3000`
+
+---
+
+## AWS Deployment Guide (EC2)
+
+To deploy this application to an AWS EC2 instance (Ubuntu), SSH into your server and run the following bash commands:
+
+**1. Update the server and install Node.js (v18):**
+\`\`\`bash
+sudo apt update
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt install -y nodejs
+\`\`\`
+
+**2. Clone your repository:**
+*(Replace the URL with your actual GitHub repository URL)*
+\`\`\`bash
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name/backend
+\`\`\`
+
+**3. Install project dependencies:**
+\`\`\`bash
+npm install
+\`\`\`
+
+**4. Set up your Environment Variables:**
+Open the nano text editor to create your `.env` file and paste your Supabase URLs inside:
+\`\`\`bash
+nano .env
+\`\`\`
+*(Press `Ctrl + X`, then `Y`, then `Enter` to save and exit).*
+
+**5. Generate the Prisma Client for production:**
+\`\`\`bash
+npx prisma generate
+\`\`\`
+
+**6. Install PM2 to keep the app running in the background:**
+\`\`\`bash
+sudo npm install -g pm2
+\`\`\`
+
+**7. Start the application with PM2:**
+\`\`\`bash
+pm2 start server.js --name "url-shortener"
+\`\`\`
+
+**8. Ensure PM2 restarts the app automatically if the AWS server reboots:**
+\`\`\`bash
+pm2 startup
+pm2 save
+\`\`\`
+
+*Note: Make sure you have opened port `3000` (or port `80` if using a reverse proxy like Nginx) in your EC2 instance's Security Group settings in the AWS Console.*
 
 ---
 
@@ -73,19 +130,11 @@ The application will be running at: `http://localhost:3000`
     "originalUrl": "https://www.example.com"
   }
   \`\`\`
-* **Success Response (201):**
-  \`\`\`json
-  {
-    "originalUrl": "https://www.example.com",
-    "shortCode": "a1b2c3",
-    "shortLink": "http://localhost:3000/a1b2c3"
-  }
-  \`\`\`
 
 ### 2. Redirect to Original URL
 * **Endpoint:** `/:shortCode`
 * **Method:** `GET`
-* **Description:** Redirects the user to the original URL and increments the visit counter. Uses a `302 Temporary Redirect` to ensure clicks are tracked reliably across browsers.
+* **Description:** Redirects the user to the original URL and increments the visit counter using a `302 Temporary Redirect`.
 
 ### 3. Get URL Statistics
 * **Endpoint:** `/api/stats/:shortCode`
@@ -97,7 +146,7 @@ The application will be running at: `http://localhost:3000`
     "originalUrl": "https://www.example.com",
     "visits": 5
   }
-  
+  \`\`\`
 
 ---
 
@@ -112,7 +161,4 @@ backend/
 ├── package.json           # Project dependencies and scripts
 ├── prisma.config.ts       # Prisma 7 adapter configuration
 └── server.js              # Express API Server and application logic
-
-
-## Deployed at aws 
-Deployed Link - http://51.20.53.241:3000/
+\`\`\`
