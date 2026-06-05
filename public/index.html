@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fleet Studio URL Shortener</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 50px 20px;
+        }
+        .container {
+            background: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 500px;
+            text-align: center;
+        }
+        h1 { color: #00b4d8; }
+        input[type="url"], input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #00b4d8;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        button:hover { background-color: #0096c7; }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            display: none;
+            word-break: break-all;
+        }
+        .error { color: red; margin-top: 10px; }
+        hr { border: 0; height: 1px; background: #eee; margin: 30px 0; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>URL Shortener</h1>
+    <p>Paste a long URL below to generate a short link.</p>
+    
+    <form id="shortenForm">
+        <input type="url" id="longUrl" placeholder="https://www.example.com/very/long/link" required>
+        <button type="submit">Shorten URL</button>
+    </form>
+    
+    <p class="error" id="errorMessage"></p>
+    
+    <div class="result" id="resultDiv">
+        <p><strong>Success! Here is your short link:</strong></p>
+        <a id="shortLink" href="#" target="_blank"></a>
+    </div>
+
+    <hr>
+
+    <h3>Check Link Stats</h3>
+    <form id="statsForm">
+        <input type="text" id="shortCodeInput" placeholder="Enter short code (e.g. a1b2c3)" required>
+        <button type="submit">Check Visits</button>
+    </form>
+    
+    <div class="result" id="statsResultDiv">
+        <p><strong>Original URL:</strong> <span id="statsOriginal"></span></p>
+        <p><strong>Total Visits:</strong> <span id="statsVisits"></span></p>
+    </div>
+</div>
+
+<script>
+    // Handle URL Shortening
+    document.getElementById('shortenForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const originalUrl = document.getElementById('longUrl').value;
+        const errorMessage = document.getElementById('errorMessage');
+        const resultDiv = document.getElementById('resultDiv');
+        const shortLinkAnchor = document.getElementById('shortLink');
+
+        errorMessage.textContent = '';
+        resultDiv.style.display = 'none';
+
+        try {
+            const response = await fetch('/api/shorten', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ originalUrl })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.error || 'Something went wrong');
+            }
+
+            shortLinkAnchor.href = data.shortLink;
+            shortLinkAnchor.textContent = data.shortLink;
+            resultDiv.style.display = 'block';
+            document.getElementById('longUrl').value = ''; // clear input
+
+        } catch (error) {
+            errorMessage.textContent = error.message;
+        }
+    });
+
+    // Handle Stats Checking
+    document.getElementById('statsForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const shortCode = document.getElementById('shortCodeInput').value;
+        const statsResultDiv = document.getElementById('statsResultDiv');
+        
+        try {
+            const response = await fetch(`/api/stats/${shortCode}`);
+            const data = await response.json();
+
+            if (!response.ok) {
+                alert(data.error || 'Could not fetch stats');
+                statsResultDiv.style.display = 'none';
+                return;
+            }
+
+            document.getElementById('statsOriginal').textContent = data.originalUrl;
+            document.getElementById('statsVisits').textContent = data.visits;
+            statsResultDiv.style.display = 'block';
+
+        } catch (error) {
+            alert('Error fetching statistics.');
+        }
+    });
+</script>
+
+</body>
+</html>

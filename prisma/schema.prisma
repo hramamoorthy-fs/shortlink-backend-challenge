@@ -1,0 +1,17 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Url {
+  id          Int      @id @default(autoincrement())
+  originalUrl String   @map("original_url")
+  shortCode   String   @unique @map("short_code")
+  visits      Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("urls") 
+}
